@@ -1,0 +1,223 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "Device is already configured"
+    },
+    "error": {
+      "duplicate_zone_name": "Zone name already exists on this floor",
+      "insufficient_vertices": "Zone must have at least 3 vertices",
+      "invalid_input": "Invalid input provided",
+      "invalid_target_count": "Device must have exactly 6 target entities (3 targets with X and Y coordinates)",
+      "invalid_vertices": "Invalid vertex format. Use [[x,y], [x,y], ...] or space-separated x,y pairs",
+      "no_target_entities": "No target entities found on selected device. Ensure the device has target coordinate sensors."
+    },
+    "step": {
+      "user": {
+        "data": {
+          "name": "Name",
+          "staleness_timeout": "Target staleness timeout",
+          "test_mode": "Test mode"
+        },
+        "data_description": {
+          "name": "Name for this integration instance",
+          "staleness_timeout": "Time in seconds before targets are considered stale and filtered out",
+          "test_mode": "Enable test mode for debugging"
+        },
+        "description": "Configure multi-sensor radar fusion for presence detection with ESPHome LD2450 sensors.",
+        "title": "Set up Radar Fusion"
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "zone": {
+        "name": "{zone_name}"
+      }
+    },
+    "switch": {
+      "block_zone": {
+        "name": "{zone_name} block"
+      }
+    }
+  },
+  "options": {
+    "error": {
+      "duplicate_zone_name": "[%key:component::radar_fusion::config::error::duplicate_zone_name%]",
+      "insufficient_vertices": "[%key:component::radar_fusion::config::error::insufficient_vertices%]",
+      "invalid_input": "[%key:component::radar_fusion::config::error::invalid_input%]",
+      "invalid_target_count": "[%key:component::radar_fusion::config::error::invalid_target_count%]",
+      "invalid_vertices": "[%key:component::radar_fusion::config::error::invalid_vertices%]",
+      "no_target_entities": "[%key:component::radar_fusion::config::error::no_target_entities%]"
+    },
+    "step": {
+      "add_block_zone": {
+        "data": {
+          "floor_id": "Floor",
+          "name": "Block zone name",
+          "vertices": "Vertices"
+        },
+        "data_description": {
+          "floor_id": "Floor where block zone is located",
+          "name": "Unique name for the block zone",
+          "vertices": "Block zone polygon vertices in millimeters"
+        },
+        "description": "Create a block zone to filter out false detections. Provide vertices as [[x,y], [x,y], ...]\n\nExample: {vertices_example}",
+        "title": "Add Block Zone"
+      },
+      "add_sensor": {
+        "data": {
+          "device_id": "LD2450 Device",
+          "floor_id": "Floor",
+          "position_x": "Position X",
+          "position_y": "Position Y",
+          "rotation": "Rotation"
+        },
+        "data_description": {
+          "device_id": "Select the ESPHome device with LD2450 sensor",
+          "floor_id": "Floor where sensor is installed",
+          "position_x": "X coordinate of sensor in millimeters",
+          "position_y": "Y coordinate of sensor in millimeters",
+          "rotation": "Sensor rotation in degrees (0-359)"
+        },
+        "description": "Add an ESPHome LD2450 sensor to the fusion system. The integration will automatically detect target entities from the selected device.",
+        "title": "Add Sensor"
+      },
+      "add_zone": {
+        "data": {
+          "floor_id": "Floor",
+          "name": "Zone name",
+          "vertices": "Vertices"
+        },
+        "data_description": {
+          "floor_id": "Floor where zone is located",
+          "name": "Unique name for the zone",
+          "vertices": "Zone polygon vertices in millimeters"
+        },
+        "description": "Create a detection zone. Provide vertices as [[x,y], [x,y], ...] or space-separated pairs.\n\nExample: {vertices_example}",
+        "title": "Add Zone"
+      },
+      "block_zones": {
+        "menu_options": {
+          "add_block_zone": "Add block zone",
+          "edit_block_zone": "Edit block zone",
+          "remove_block_zone": "Remove block zone"
+        },
+        "title": "Block Zone Management"
+      },
+      "edit_block_zone": {
+        "data": {
+          "zone_index": "Block zone to edit"
+        },
+        "description": "Select a block zone to edit.",
+        "title": "Edit Block Zone"
+      },
+      "edit_block_zone_form": {
+        "data": {
+          "floor_id": "Floor",
+          "name": "Block zone name",
+          "vertices": "Vertices"
+        },
+        "data_description": {
+          "floor_id": "Floor where block zone is located",
+          "name": "Unique name for the block zone",
+          "vertices": "Block zone polygon vertices in millimeters"
+        },
+        "description": "Edit the block zone. Targets within this zone will be filtered out when enabled. Provide vertices as [[x,y], [x,y], ...] or space-separated pairs.\n\nExample: {vertices_example}",
+        "title": "Edit Block Zone"
+      },
+      "edit_zone": {
+        "data": {
+          "zone_index": "Zone to edit"
+        },
+        "description": "Select a zone to edit.",
+        "title": "Edit Zone"
+      },
+      "edit_zone_form": {
+        "data": {
+          "floor_id": "Floor",
+          "name": "Zone name",
+          "vertices": "Vertices"
+        },
+        "data_description": {
+          "floor_id": "Floor where zone is located",
+          "name": "Unique name for the zone",
+          "vertices": "Zone polygon vertices in millimeters"
+        },
+        "description": "Edit the detection zone. Provide vertices as [[x,y], [x,y], ...] or space-separated pairs.\n\nExample: {vertices_example}",
+        "title": "Edit Zone"
+      },
+      "init": {
+        "menu_options": {
+          "block_zones": "Manage block zones",
+          "sensors": "Manage sensors",
+          "settings": "Settings",
+          "zones": "Manage zones"
+        },
+        "title": "Manage Radar Fusion"
+      },
+      "remove_block_zone": {
+        "data": {
+          "zone_index": "Block zone to remove"
+        },
+        "description": "Select a block zone to remove.",
+        "title": "Remove Block Zone"
+      },
+      "remove_sensor": {
+        "data": {
+          "sensor_index": "Sensor to remove"
+        },
+        "description": "Select a sensor to remove from the fusion system.",
+        "title": "Remove Sensor"
+      },
+      "remove_zone": {
+        "data": {
+          "zone_index": "Zone to remove"
+        },
+        "description": "Select a zone to remove.",
+        "title": "Remove Zone"
+      },
+      "sensors": {
+        "menu_options": {
+          "add_sensor": "Add sensor",
+          "edit_sensor": "Edit sensor",
+          "remove_sensor": "Remove sensor"
+        },
+        "title": "Sensor Management"
+      },
+      "settings": {
+        "data": {
+          "staleness_timeout": "Target staleness timeout"
+        },
+        "data_description": {
+          "staleness_timeout": "Time in seconds before targets are considered stale and filtered out"
+        },
+        "description": "Configure global settings for radar fusion.",
+        "title": "Settings"
+      },
+      "zones": {
+        "menu_options": {
+          "add_zone": "Add zone",
+          "edit_zone": "Edit zone",
+          "remove_zone": "Remove zone"
+        },
+        "title": "Zone Management"
+      }
+    }
+  },
+  "services": {
+    "get_floor_data": {
+      "description": "Get current sensor, zone, and target data for a specific floor for use in frontend cards.",
+      "fields": {
+        "config_entry_id": {
+          "description": "The config entry ID of the Radar Fusion integration.",
+          "name": "Config entry ID"
+        },
+        "floor_id": {
+          "description": "The floor ID to get data for. If not provided, returns data for all floors.",
+          "name": "Floor ID"
+        }
+      },
+      "name": "Get floor data"
+    }
+  }
+}

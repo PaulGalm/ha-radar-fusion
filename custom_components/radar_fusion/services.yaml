@@ -1,0 +1,12 @@
+get_floor_data:
+  fields:
+    config_entry_id:
+      required: true
+      example: "01234567890abcdef01234567890abcd"
+      selector:
+        text:
+    floor_id:
+      required: false
+      example: "ground_floor"
+      selector:
+        floor:

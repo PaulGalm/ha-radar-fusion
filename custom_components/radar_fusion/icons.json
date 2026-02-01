@@ -1,0 +1,7 @@
+{
+  "services": {
+    "get_floor_data": {
+      "service": "mdi:floor-plan"
+    }
+  }
+}

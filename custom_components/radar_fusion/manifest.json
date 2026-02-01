@@ -1,0 +1,15 @@
+{
+  "domain": "radar_fusion",
+  "name": "Radar Fusion",
+  "codeowners": [
+    "@PaulGalm"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://www.home-assistant.io/integrations/radar_fusion",
+  "integration_type": "service",
+  "iot_class": "calculated",
+  "quality_scale": "bronze",
+  "requirements": [],
+  "version": "1.0.1"
+}
