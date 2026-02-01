@@ -116,11 +116,11 @@ async def _register_frontend(hass: HomeAssistant) -> None:
     card_resources = [
         {
             "url": f"{STATIC_PATH_URL}/radar-fusion-card.js",
-            "type": "module",
+            "res_type": "module",
         },
         {
             "url": f"{STATIC_PATH_URL}/radar-fusion-heatmap-card.js",
-            "type": "module",
+            "res_type": "module",
         },
     ]
 
