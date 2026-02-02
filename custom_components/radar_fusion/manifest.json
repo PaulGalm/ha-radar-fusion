@@ -5,9 +5,10 @@
   "codeowners": ["@PaulGalm"],
   "config_flow": true,
   "dependencies": ["http"],
-  "documentation": "https://www.home-assistant.io/integrations/radar_fusion",
+  "documentation": "https://github.com/PaulGalm/radar_fusion",
   "integration_type": "service",
   "iot_class": "calculated",
   "quality_scale": "bronze",
-  "requirements": []
+  "requirements": [],
+  "version": "1.0.4"
 }
