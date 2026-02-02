@@ -11,11 +11,13 @@ from homeassistant.components.lovelace import DOMAIN as LOVELACE_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall, SupportsResponse
-from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import config_validation as cv, device_registry as dr
 from homeassistant.helpers.typing import ConfigType
 
 from .const import (
     CONF_FLOOR_ID,
+    CONF_SENSOR_NAME,
+    CONF_SENSORS,
     CONF_TEST_MODE,
     DOMAIN,
     SERVICE_GET_FLOOR_DATA,
@@ -37,7 +39,7 @@ SERVICE_SET_TEST_MODE_SCHEMA = vol.Schema(
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
-PLATFORMS = [Platform.BINARY_SENSOR, Platform.SWITCH]
+PLATFORMS = [Platform.BINARY_SENSOR, Platform.SENSOR, Platform.SWITCH]
 
 SERVICE_GET_FLOOR_DATA_SCHEMA = vol.Schema(
     {
@@ -69,6 +71,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Fetch initial data
     await coordinator.async_config_entry_first_refresh()
 
+    # Create/update sensor devices
+    await async_setup_sensor_devices(hass, entry)
+
     # Set up platforms
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
@@ -84,19 +89,80 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
+async def async_setup_sensor_devices(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Create or update device entries for each sensor."""
+    device_registry = dr.async_get(hass)
+    sensors = entry.data.get(CONF_SENSORS, [])
+
+    # Track existing sensor device IDs to clean up removed sensors
+    existing_device_ids = set()
+
+    for idx, sensor in enumerate(sensors):
+        # Generate unique identifier for this sensor
+        sensor_unique_id = f"{entry.entry_id}_sensor_{idx}"
+
+        # Get sensor name
+        sensor_name = sensor.get(CONF_SENSOR_NAME) or f"Sensor {idx + 1}"
+
+        # Create or update device
+        device = device_registry.async_get_or_create(
+            config_entry_id=entry.entry_id,
+            identifiers={(DOMAIN, sensor_unique_id)},
+            name=sensor_name,
+            manufacturer="Radar Fusion",
+            model="LD2450 Radar Sensor",
+            entry_type=dr.DeviceEntryType.SERVICE,
+            configuration_url=f"homeassistant://config/integrations/integration/{DOMAIN}",
+        )
+
+        existing_device_ids.add(device.id)
+
+    # Clean up devices for sensors that were removed
+    all_devices = dr.async_entries_for_config_entry(device_registry, entry.entry_id)
+    for device in all_devices:
+        # Check if this is a sensor device (has our domain identifier)
+        is_sensor_device = any(
+            identifier[0] == DOMAIN
+            and identifier[1].startswith(f"{entry.entry_id}_sensor_")
+            for identifier in device.identifiers
+        )
+
+        if is_sensor_device and device.id not in existing_device_ids:
+            device_registry.async_remove_device(device.id)
+
+
 async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Update listener, called when the config entry options are changed."""
+    # Update sensor devices in case sensors were added/removed/renamed
+    await async_setup_sensor_devices(hass, entry)
+    # Reload to apply changes
     await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def _register_frontend(hass: HomeAssistant) -> None:
     """Register static path and Lovelace resources for Radar Fusion cards."""
-    # Get the path to the frontend directory
-    frontend_path = Path(__file__).parent / "frontend"
+    # Skip if http component is not loaded (e.g., in tests)
+    if hass.http is None:
+        return
+
+    # Get the path to the integration directory for logos and frontend
+    integration_path = Path(__file__).parent
+    frontend_path = integration_path / "frontend"
 
     # Register static path to serve frontend files
     await hass.http.async_register_static_paths(
         [StaticPathConfig(STATIC_PATH_URL, str(frontend_path), cache_headers=False)]
+    )
+
+    # Register static path for logos (so they can be accessed)
+    await hass.http.async_register_static_paths(
+        [
+            StaticPathConfig(
+                f"/local_component_logos/{DOMAIN}",
+                str(integration_path),
+                cache_headers=True,
+            )
+        ]
     )
 
     # Access the Lovelace resources collection

@@ -8,6 +8,7 @@ from typing import Any
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
@@ -59,6 +60,15 @@ class RadarFusionBlockZoneSwitch(RestoreEntity, SwitchEntity):
         self._attr_name = f"{self._zone_name} Block"
         self._attr_unique_id = f"{config_entry.entry_id}_block_zone_{idx}"
         self._attr_is_on = False
+
+        # Add device info to group block zone switches
+        self._attr_device_info = dr.DeviceInfo(
+            identifiers={(DOMAIN, f"{config_entry.entry_id}_block_zones")},
+            name="Radar Fusion Block Zones",
+            manufacturer="Radar Fusion",
+            model="Block Zones",
+            entry_type=dr.DeviceEntryType.SERVICE,
+        )
 
         # Extra state attributes
         self._attr_extra_state_attributes = {

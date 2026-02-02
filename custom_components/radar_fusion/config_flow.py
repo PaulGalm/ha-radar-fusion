@@ -23,6 +23,7 @@ from .const import (
     CONF_POSITION_X,
     CONF_POSITION_Y,
     CONF_ROTATION,
+    CONF_SENSOR_NAME,
     CONF_SENSORS,
     CONF_STALENESS_TIMEOUT,
     CONF_TARGET_ENTITIES,
@@ -215,6 +216,7 @@ class RadarFusionOptionsFlow(OptionsFlow):
                     errors["base"] = "invalid_target_count"
                 else:
                     sensor_config = {
+                        CONF_SENSOR_NAME: user_input.get(CONF_SENSOR_NAME, ""),
                         CONF_FLOOR_ID: user_input.get(CONF_FLOOR_ID),
                         CONF_POSITION_X: user_input[CONF_POSITION_X],
                         CONF_POSITION_Y: user_input[CONF_POSITION_Y],
@@ -237,6 +239,7 @@ class RadarFusionOptionsFlow(OptionsFlow):
             step_id="add_sensor",
             data_schema=vol.Schema(
                 {
+                    vol.Optional(CONF_SENSOR_NAME, default=""): selector.TextSelector(),
                     vol.Optional(CONF_FLOOR_ID): selector.FloorSelector(),
                     vol.Required(CONF_POSITION_X, default=0): selector.NumberSelector(
                         selector.NumberSelectorConfig(
@@ -283,7 +286,8 @@ class RadarFusionOptionsFlow(OptionsFlow):
                 return await self.async_step_edit_sensor_form()
 
             sensor_options = [
-                f"{i}: Floor {s.get(CONF_FLOOR_ID, 'None')} - "
+                f"{i}: {s.get(CONF_SENSOR_NAME) or f'Sensor {i + 1}'} - "
+                f"Floor {s.get(CONF_FLOOR_ID, 'None')} - "
                 f"Position ({s.get(CONF_POSITION_X)}, {s.get(CONF_POSITION_Y)})"
                 for i, s in enumerate(self._sensors)
             ]
@@ -320,6 +324,7 @@ class RadarFusionOptionsFlow(OptionsFlow):
                     idx = self._edit_index
                     assert isinstance(idx, int)
                     self._sensors[idx] = {
+                        CONF_SENSOR_NAME: user_input.get(CONF_SENSOR_NAME, ""),
                         CONF_FLOOR_ID: user_input.get(CONF_FLOOR_ID),
                         CONF_POSITION_X: user_input[CONF_POSITION_X],
                         CONF_POSITION_Y: user_input[CONF_POSITION_Y],
@@ -353,6 +358,10 @@ class RadarFusionOptionsFlow(OptionsFlow):
             step_id="edit_sensor_form",
             data_schema=vol.Schema(
                 {
+                    vol.Optional(
+                        CONF_SENSOR_NAME,
+                        default=current_sensor.get(CONF_SENSOR_NAME, ""),
+                    ): selector.TextSelector(),
                     vol.Optional(
                         CONF_FLOOR_ID, default=current_sensor.get(CONF_FLOOR_ID)
                     ): selector.FloorSelector(),
@@ -413,7 +422,8 @@ class RadarFusionOptionsFlow(OptionsFlow):
             return await self.async_step_sensors()
 
         sensor_options = [
-            f"{i}: Floor {s.get(CONF_FLOOR_ID, 'None')} - "
+            f"{i}: {s.get(CONF_SENSOR_NAME) or f'Sensor {i + 1}'} - "
+            f"Floor {s.get(CONF_FLOOR_ID, 'None')} - "
             f"Position ({s.get(CONF_POSITION_X)}, {s.get(CONF_POSITION_Y)})"
             for i, s in enumerate(self._sensors)
         ]

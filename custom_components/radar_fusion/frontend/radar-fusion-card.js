@@ -473,6 +473,7 @@ class RadarFusionCard extends HTMLElement {
 
     // Draw zones (polygons)
     if (this._showZones && data.zones) {
+      console.log("Drawing zones:", data.zones.length, data.zones);
       data.zones.forEach((zone) => {
         if (zone.vertices && zone.vertices.length >= 3) {
           ctx.fillStyle = "rgba(76, 175, 80, 0.2)";
@@ -499,6 +500,13 @@ class RadarFusionCard extends HTMLElement {
           ctx.fillText(zone.name, centerCanvas.x, centerCanvas.y);
         }
       });
+    } else {
+      console.log(
+        "Zones not shown - _showZones:",
+        this._showZones,
+        "data.zones:",
+        data.zones,
+      );
     }
 
     // Draw block zones
@@ -604,18 +612,21 @@ class RadarFusionCard extends HTMLElement {
           ctx.stroke();
 
           // Sensor label
+          // Sensor label - show name if available, otherwise index
+          const sensorLabel = sensor.name || `S${idx + 1}`;
           ctx.fillStyle = "#fff";
           ctx.font = "10px sans-serif";
           ctx.textAlign = "center";
-          ctx.fillText(`S${idx + 1}`, sensorPos.x, sensorPos.y - 18);
+          ctx.fillText(sensorLabel, sensorPos.x, sensorPos.y - 18);
         }
 
         // Add to legend
         const legendItem = document.createElement("div");
         legendItem.className = "legend-item";
+        const sensorDisplayName = sensor.name || `Sensor ${idx + 1}`;
         legendItem.innerHTML = `
           <div class="legend-color" style="background: ${color}"></div>
-          <span>Sensor ${idx + 1} (${sensor.target_count || 0} targets)</span>
+          <span>${sensorDisplayName} (${sensor.target_count || 0} targets)</span>
         `;
         legend.appendChild(legendItem);
       });

@@ -23,6 +23,7 @@ CONF_ROTATION = "rotation"
 CONF_FLOOR_ID = "floor_id"
 CONF_VERTICES = "vertices"
 CONF_TARGET_ENTITIES = "target_entities"
+CONF_SENSOR_NAME = "sensor_name"
 
 # Defaults
 DEFAULT_STALENESS_TIMEOUT = 10  # seconds

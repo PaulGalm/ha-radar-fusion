@@ -21,6 +21,7 @@ from .const import (
     CONF_POSITION_X,
     CONF_POSITION_Y,
     CONF_ROTATION,
+    CONF_SENSOR_NAME,
     CONF_SENSORS,
     CONF_STALENESS_TIMEOUT,
     CONF_TARGET_ENTITIES,
@@ -556,6 +557,7 @@ class RadarFusionCoordinator(DataUpdateCoordinator):
 
             sensors = [
                 {
+                    "name": "Test Sensor 1",
                     "position_x": 0,
                     "position_y": 0,
                     "rotation": 0,
@@ -563,6 +565,7 @@ class RadarFusionCoordinator(DataUpdateCoordinator):
                     "target_count": 1,
                 },
                 {
+                    "name": "Test Sensor 2",
                     "position_x": 2000,
                     "position_y": 1000,
                     "rotation": 45,
@@ -613,7 +616,11 @@ class RadarFusionCoordinator(DataUpdateCoordinator):
                 {
                     **z,
                     "occupancy": any(
-                        point_in_polygon(t["x"], t["y"], z.get("vertices", []))
+                        point_in_polygon(
+                            t["x"],
+                            t["y"],
+                            list(z.get("vertices", [])),  # type: ignore[arg-type]
+                        )
                         for t in targets
                     ),
                 }
@@ -655,6 +662,7 @@ class RadarFusionCoordinator(DataUpdateCoordinator):
 
         floor_sensors = [
             {
+                "name": s.get(CONF_SENSOR_NAME, ""),
                 "position_x": s.get(CONF_POSITION_X),
                 "position_y": s.get(CONF_POSITION_Y),
                 "rotation": s.get(CONF_ROTATION),

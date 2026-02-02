@@ -11,6 +11,7 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -66,6 +67,15 @@ class RadarFusionZoneSensor(
         # Entity attributes
         self._attr_name = self._zone_name
         self._attr_unique_id = f"{config_entry.entry_id}_zone_{idx}"
+
+        # Add device info to group zone sensors
+        self._attr_device_info = dr.DeviceInfo(
+            identifiers={(DOMAIN, f"{config_entry.entry_id}_zones")},
+            name="Radar Fusion Zones",
+            manufacturer="Radar Fusion",
+            model="Detection Zones",
+            entry_type=dr.DeviceEntryType.SERVICE,
+        )
 
         # Extra state attributes
         self._attr_extra_state_attributes = {

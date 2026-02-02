@@ -70,14 +70,16 @@
           "floor_id": "Floor",
           "position_x": "Position X",
           "position_y": "Position Y",
-          "rotation": "Rotation"
+          "rotation": "Rotation",
+          "sensor_name": "Sensor name"
         },
         "data_description": {
           "device_id": "Select the ESPHome device with LD2450 sensor",
           "floor_id": "Floor where sensor is installed",
           "position_x": "X coordinate of sensor in millimeters",
           "position_y": "Y coordinate of sensor in millimeters",
-          "rotation": "Sensor rotation in degrees (0-359)"
+          "rotation": "Sensor rotation in degrees (0-359)",
+          "sensor_name": "Optional name for the sensor (e.g., 'Living Room', 'Bedroom')"
         },
         "description": "Add an ESPHome LD2450 sensor to the fusion system. The integration will automatically detect target entities from the selected device.",
         "title": "Add Sensor"
@@ -124,6 +126,33 @@
         },
         "description": "Edit the block zone. Targets within this zone will be filtered out when enabled. Provide vertices as [[x,y], [x,y], ...] or space-separated pairs.\n\nExample: {vertices_example}",
         "title": "Edit Block Zone"
+      },
+      "edit_sensor": {
+        "data": {
+          "sensor_index": "Sensor to edit"
+        },
+        "description": "Select a sensor to edit.",
+        "title": "Edit Sensor"
+      },
+      "edit_sensor_form": {
+        "data": {
+          "floor_id": "Floor",
+          "position_x": "Position X",
+          "position_y": "Position Y",
+          "rotation": "Rotation",
+          "sensor_name": "Sensor name",
+          "target_entities": "Target entities"
+        },
+        "data_description": {
+          "floor_id": "Floor where sensor is installed",
+          "position_x": "X coordinate of sensor in millimeters",
+          "position_y": "Y coordinate of sensor in millimeters",
+          "rotation": "Sensor rotation in degrees (0-359)",
+          "sensor_name": "Optional name for the sensor (e.g., 'Living Room', 'Bedroom')",
+          "target_entities": "Target coordinate entities for this sensor"
+        },
+        "description": "Edit the sensor configuration.",
+        "title": "Edit Sensor"
       },
       "edit_zone": {
         "data": {
