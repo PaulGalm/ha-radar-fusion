@@ -21,7 +21,7 @@ Multi-sensor radar fusion for presence detection with ESPHome LD2450 sensors.
 
 1. Add this repository as a custom repository in HACS:
    - Go to HACS → Integrations → ⋮ (menu) → Custom repositories
-   - Repository: `https://github.com/YOUR_USERNAME/radar-fusion`
+   - Repository: `https://github.com/PaulGalm/radar-fusion`
    - Category: Integration
 2. Click "Explore & Download Repositories"
 3. Search for "Radar Fusion"
