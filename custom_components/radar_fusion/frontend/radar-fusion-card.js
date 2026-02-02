@@ -84,6 +84,10 @@ class RadarFusionCard extends HTMLElement {
       floorplan_height_mm: config.floorplan_height_mm || null, // Physical height of floorplan in mm
       offset_x: config.offset_x || 0, // Shift in mm
       offset_y: config.offset_y || 0, // Shift in mm
+      zone_opacity: config.zone_opacity !== undefined ? config.zone_opacity : 0.5, // Zone opacity (0.0-1.0)
+      detection_opacity: config.detection_opacity !== undefined ? config.detection_opacity : 0.3, // Detection cone opacity (0.0-1.0)
+      show_header: config.show_header !== false, // Show header with title and buttons (default: true)
+      show_legend: config.show_legend !== false, // Show legend and stats (default: true)
     };
     // Load floorplan image if provided
     if (this._config.floorplan_url) {
@@ -310,6 +314,7 @@ class RadarFusionCard extends HTMLElement {
 
     const html = `
       ${style}
+      ${this._config.show_header ? `
       <div class="card-header">
         <div class="card-title">${this._config.title}</div>
         <div class="controls">
@@ -324,11 +329,14 @@ class RadarFusionCard extends HTMLElement {
           </button>
         </div>
       </div>
+      ` : ''}
       <div class="canvas-container">
         <canvas id="radarCanvas" width="${canvasWidth}" height="${canvasHeight}"></canvas>
       </div>
+      ${this._config.show_legend ? `
       <div class="legend" id="legend"></div>
       <div class="stats" id="stats"></div>
+      ` : ''}
     `;
 
     this.shadowRoot.innerHTML = html;
@@ -476,8 +484,10 @@ class RadarFusionCard extends HTMLElement {
       console.log("Drawing zones:", data.zones.length, data.zones);
       data.zones.forEach((zone) => {
         if (zone.vertices && zone.vertices.length >= 3) {
-          ctx.fillStyle = "rgba(76, 175, 80, 0.2)";
-          ctx.strokeStyle = "rgba(76, 175, 80, 0.8)";
+          const fillAlpha = Math.round(this._config.zone_opacity * 255).toString(16).padStart(2, '0');
+          const strokeAlpha = Math.round(Math.min(this._config.zone_opacity * 3, 1.0) * 255).toString(16).padStart(2, '0');
+          ctx.fillStyle = `#4CAF50${fillAlpha}`;
+          ctx.strokeStyle = `#4CAF50${strokeAlpha}`;
           ctx.lineWidth = 2;
 
           ctx.beginPath();
@@ -513,8 +523,10 @@ class RadarFusionCard extends HTMLElement {
     if (this._showDetectionZones && data.block_zones) {
       data.block_zones.forEach((zone) => {
         if (zone.vertices && zone.vertices.length >= 3) {
-          ctx.fillStyle = "rgba(244, 67, 54, 0.2)";
-          ctx.strokeStyle = "rgba(244, 67, 54, 0.8)";
+          const fillAlpha = Math.round(this._config.zone_opacity * 255).toString(16).padStart(2, '0');
+          const strokeAlpha = Math.round(Math.min(this._config.zone_opacity * 3, 1.0) * 255).toString(16).padStart(2, '0');
+          ctx.fillStyle = `#F44336${fillAlpha}`;
+          ctx.strokeStyle = `#F44336${strokeAlpha}`;
           ctx.lineWidth = 2;
           ctx.setLineDash([5, 5]);
 
@@ -548,7 +560,9 @@ class RadarFusionCard extends HTMLElement {
     // Draw sensors and detection zones
     if (data.sensors) {
       const legend = this.shadowRoot.getElementById("legend");
-      legend.innerHTML = "";
+      if (legend) {
+        legend.innerHTML = "";
+      }
 
       data.sensors.forEach((sensor, idx) => {
         const color = this._sensorColors[idx % this._sensorColors.length];
@@ -559,8 +573,10 @@ class RadarFusionCard extends HTMLElement {
           const angle = 120; // degrees total (±60°)
           const rotation = sensor.rotation || 0;
 
-          ctx.fillStyle = color + "20";
-          ctx.strokeStyle = color + "80";
+          const fillAlpha = Math.round(this._config.detection_opacity * 255).toString(16).padStart(2, '0');
+          const strokeAlpha = Math.round(Math.min(this._config.detection_opacity * 4, 1.0) * 255).toString(16).padStart(2, '0');
+          ctx.fillStyle = color + fillAlpha;
+          ctx.strokeStyle = color + strokeAlpha;
           ctx.lineWidth = 1;
           ctx.setLineDash([3, 3]);
 
@@ -628,7 +644,9 @@ class RadarFusionCard extends HTMLElement {
           <div class="legend-color" style="background: ${color}"></div>
           <span>${sensorDisplayName} (${sensor.target_count || 0} targets)</span>
         `;
-        legend.appendChild(legendItem);
+        if (legend) {
+          legend.appendChild(legendItem);
+        }
       });
     }
 
@@ -1052,6 +1070,64 @@ class RadarFusionCardEditor extends HTMLElement {
       </div>
 
       <div class="form-group">
+        <label for="zone_opacity">Zone Opacity</label>
+        <input
+          type="number"
+          id="zone_opacity"
+          min="0"
+          max="1"
+          step="0.1"
+          value="${this._config.zone_opacity !== undefined ? this._config.zone_opacity : 0.5}"
+        />
+        <div class="form-description">
+          Transparency of detection zones and block zones (0.0 = transparent, 1.0 = opaque)
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="detection_opacity">Detection Cone Opacity</label>
+        <input
+          type="number"
+          id="detection_opacity"
+          min="0"
+          max="1"
+          step="0.1"
+          value="${this._config.detection_opacity !== undefined ? this._config.detection_opacity : 0.3}"
+        />
+        <div class="form-description">
+          Transparency of sensor detection cones (0.0 = transparent, 1.0 = opaque)
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="checkbox-group">
+          <input
+            type="checkbox"
+            id="show_header"
+            ${this._config.show_header !== false ? "checked" : ""}
+          />
+          <label for="show_header">Show Header</label>
+        </div>
+        <div class="form-description">
+          Display title and control buttons (Zones, Sensors, Detection Zones)
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="checkbox-group">
+          <input
+            type="checkbox"
+            id="show_legend"
+            ${this._config.show_legend !== false ? "checked" : ""}
+          />
+          <label for="show_legend">Show Legend</label>
+        </div>
+        <div class="form-description">
+          Display statistics at the bottom
+        </div>
+      </div>
+
+      <div class="form-group">
         <div class="checkbox-group">
           <input
             type="checkbox"
@@ -1079,7 +1155,8 @@ class RadarFusionCardEditor extends HTMLElement {
     if (target.type === "checkbox") {
       value = target.checked;
     } else if (target.type === "number") {
-      value = parseInt(target.value, 10);
+      // Parse as float for opacity fields, integer for others
+      value = (id === "zone_opacity" || id === "detection_opacity") ? parseFloat(target.value) : parseInt(target.value, 10);
     } else {
       value = target.value;
     }

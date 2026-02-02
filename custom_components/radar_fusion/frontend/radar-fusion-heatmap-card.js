@@ -71,6 +71,10 @@ class RadarFusionHeatmapCard extends HTMLElement {
       floorplan_height_mm: config.floorplan_height_mm || null, // Physical height of floorplan in mm
       offset_x: config.offset_x || 0, // Shift in mm
       offset_y: config.offset_y || 0, // Shift in mm
+      // Migrate old decimal opacity (0.0-1.0) to new percentage (0-100)
+      opacity: config.opacity !== undefined ? (config.opacity <= 1 ? config.opacity * 100 : config.opacity) : 50, // Heatmap opacity (0-100%)
+      show_header: config.show_header !== false, // Show header with controls (default: true)
+      show_legend: config.show_legend !== false, // Show stats (default: true)
     };
     // Load floorplan image if provided
     if (this._config.floorplan_url) {
@@ -210,6 +214,7 @@ class RadarFusionHeatmapCard extends HTMLElement {
     `;
     const html = `
       ${style}
+      ${this._config.show_header ? `
       <div class="card-header">
         <div class="card-title">${this._config.title}</div>
         <div class="controls">
@@ -221,10 +226,13 @@ class RadarFusionHeatmapCard extends HTMLElement {
           <button class="toggle-btn" id="reset-heatmap">Reset heatmap</button>
         </div>
       </div>
+      ` : ''}
       <div class="canvas-container">
         <canvas id="heatmapCanvas" width="${canvasWidth}" height="${canvasHeight}"></canvas>
       </div>
+      ${this._config.show_legend ? `
       <div class="stats" id="stats"></div>
+      ` : ''}
     `;
     this.shadowRoot.innerHTML = html;
 
@@ -359,6 +367,7 @@ class RadarFusionHeatmapCard extends HTMLElement {
 
       ctx.drawImage(this._floorplanImage, drawX, drawY, drawWidth, drawHeight);
     }
+
     const heatmapData = data.heatmap;
     const timeline =
       this._heatmapScale === "hourly"
@@ -373,7 +382,9 @@ class RadarFusionHeatmapCard extends HTMLElement {
         if (v > maxCount) maxCount = v;
       });
       ctx.save();
-      ctx.globalCompositeOperation = "lighter";
+      // Set global opacity only for heatmap overlay (convert percentage to decimal)
+      ctx.globalAlpha = this._config.opacity / 100;
+      ctx.globalCompositeOperation = "source-over";
       entries.forEach(([k, v]) => {
         const parts = k.split("_");
         const xi = parseInt(parts[0], 10);
@@ -385,7 +396,8 @@ class RadarFusionHeatmapCard extends HTMLElement {
         const size = RES_MM * scale;
         const intensity = Math.min(1, v / Math.max(1, maxCount));
         const hue = (1 - intensity) * 120;
-        ctx.fillStyle = `hsla(${hue}, 100%, 50%, ${0.25 * intensity + 0.05})`;
+        // Use intensity only for color (green to red), opacity is controlled by global alpha
+        ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
         ctx.fillRect(cpos.x - size / 2, cpos.y - size / 2, size, size);
       });
       ctx.restore();
@@ -686,6 +698,49 @@ class RadarFusionHeatmapCardEditor extends HTMLElement {
           step="500"
           value="${this._config.grid_size || 5000}"
         />
+      </div>
+
+      <div class="form-group">
+        <label for="opacity">Heatmap Opacity</label>
+        <input
+          type="number"
+          id="opacity"
+          min="0"
+          max="100"
+          step="5"
+          value="${this._config.opacity !== undefined ? this._config.opacity : 50}"
+        />
+        <div class="form-description">
+          Transparency of heatmap overlay (0% = transparent, 100% = opaque)
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="checkbox-group">
+          <input
+            type="checkbox"
+            id="show_header"
+            ${this._config.show_header !== false ? "checked" : ""}
+          />
+          <label for="show_header">Show Header</label>
+        </div>
+        <div class="form-description">
+          Display title and heatmap scale controls
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="checkbox-group">
+          <input
+            type="checkbox"
+            id="show_legend"
+            ${this._config.show_legend !== false ? "checked" : ""}
+          />
+          <label for="show_legend">Show Legend</label>
+        </div>
+        <div class="form-description">
+          Display statistics at the bottom
+        </div>
       </div>
 
       <div class="form-group">

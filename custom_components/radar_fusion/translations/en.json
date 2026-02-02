@@ -34,14 +34,6 @@
                 "name": "{zone_name}"
             }
         },
-        "sensor": {
-            "target_count": {
-                "name": "Target count"
-            },
-            "target_positions": {
-                "name": "Target positions"
-            }
-        },
         "switch": {
             "block_zone": {
                 "name": "{zone_name} block"
