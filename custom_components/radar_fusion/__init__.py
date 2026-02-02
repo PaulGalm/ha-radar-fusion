@@ -145,24 +145,12 @@ async def _register_frontend(hass: HomeAssistant) -> None:
     if hass.http is None:
         return
 
-    # Get the path to the integration directory for logos and frontend
-    integration_path = Path(__file__).parent
-    frontend_path = integration_path / "frontend"
+    # Get the path to the frontend directory
+    frontend_path = Path(__file__).parent / "frontend"
 
     # Register static path to serve frontend files
     await hass.http.async_register_static_paths(
         [StaticPathConfig(STATIC_PATH_URL, str(frontend_path), cache_headers=False)]
-    )
-
-    # Register static path for logos (so they can be accessed)
-    await hass.http.async_register_static_paths(
-        [
-            StaticPathConfig(
-                f"/local_component_logos/{DOMAIN}",
-                str(integration_path),
-                cache_headers=True,
-            )
-        ]
     )
 
     # Access the Lovelace resources collection
