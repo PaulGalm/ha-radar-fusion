@@ -7,6 +7,7 @@ class RadarFusionCard extends HTMLElement {
     this._showZones = true;
     this._showSensors = true;
     this._showDetectionZones = true;
+    this._expandedView = false; // Track expanded view state
     this._sensorColors = [
       "#FF6B6B",
       "#4ECDC4",
@@ -32,9 +33,26 @@ class RadarFusionCard extends HTMLElement {
     this.startPolling();
   }
 
+  toggleExpandedView(expanded) {
+    this._expandedView = expanded;
+    if (expanded) {
+      this.classList.add("expanded");
+      // Prevent scrolling on body
+      document.body.style.overflow = "hidden";
+    } else {
+      this.classList.remove("expanded");
+      document.body.style.overflow = "";
+    }
+    this.render();
+  }
+
   disconnectedCallback() {
     // Stop polling when card is removed from DOM
     this.stopPolling();
+    // Clean up event listeners
+    if (this._handleKeyPress) {
+      document.removeEventListener("keydown", this._handleKeyPress);
+    }
   }
 
   startPolling() {
@@ -309,12 +327,76 @@ class RadarFusionCard extends HTMLElement {
           font-size: 12px;
           color: var(--secondary-text-color);
         }
+        :host(.expanded) {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 999;
+          padding: 0;
+        }
+        :host(.expanded) .card-container {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+        }
+        :host(.expanded) .expanded-header {
+          background: var(--primary-color);
+          color: var(--text-primary-color);
+          padding: 16px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 18px;
+          font-weight: 500;
+        }
+        :host(.expanded) .expanded-close-btn {
+          background: none;
+          border: none;
+          color: var(--text-primary-color);
+          font-size: 28px;
+          cursor: pointer;
+          padding: 0;
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: opacity 0.2s;
+        }
+        :host(.expanded) .expanded-close-btn:hover {
+          opacity: 0.7;
+        }
+        :host(.expanded) .canvas-container {
+          flex: 1;
+          overflow: auto;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          aspect-ratio: unset;
+        }
+        :host(.expanded) canvas {
+          max-width: 100%;
+          max-height: 100%;
+          width: auto;
+          height: auto;
+          object-fit: contain;
+        }
       </style>
     `;
 
     const html = `
       ${style}
-      ${this._config.show_header ? `
+      <div class="card-container">
+        ${this._expandedView ? `
+        <div class="expanded-header">
+          <span>${this._config.title} - Expanded View</span>
+          <button class="expanded-close-btn" id="close-expanded">✕</button>
+        </div>
+        ` : ''}
+        ${this._config.show_header && !this._expandedView ? `
       <div class="card-header">
         <div class="card-title">${this._config.title}</div>
         <div class="controls">
@@ -327,6 +409,7 @@ class RadarFusionCard extends HTMLElement {
           <button class="toggle-btn ${this._showDetectionZones ? "active" : ""}" id="toggle-detection">
             Detection Zones
           </button>
+          <button class="toggle-btn" id="expand-btn" title="Expand to fullscreen">⤢</button>
         </div>
       </div>
       ` : ''}
@@ -337,11 +420,37 @@ class RadarFusionCard extends HTMLElement {
       <div class="legend" id="legend"></div>
       <div class="stats" id="stats"></div>
       ` : ''}
+      </div>
     `;
 
     this.shadowRoot.innerHTML = html;
 
     // Add event listeners
+    const expandBtn = this.shadowRoot.getElementById("expand-btn");
+    if (expandBtn) {
+      expandBtn.addEventListener("click", () => this.toggleExpandedView(true));
+    }
+
+    const closeExpandedBtn = this.shadowRoot.getElementById("close-expanded");
+    if (closeExpandedBtn) {
+      closeExpandedBtn.addEventListener("click", () => this.toggleExpandedView(false));
+    }
+
+    // Click on canvas to open expanded view
+    const canvasEl = this.shadowRoot.getElementById("radarCanvas");
+    if (canvasEl && !this._expandedView) {
+      canvasEl.style.cursor = "pointer";
+      canvasEl.addEventListener("click", () => this.toggleExpandedView(true));
+    }
+
+    // Escape key to close expanded view
+    this._handleKeyPress = (e) => {
+      if (e.key === "Escape" && this._expandedView) {
+        this.toggleExpandedView(false);
+      }
+    };
+    document.addEventListener("keydown", this._handleKeyPress);
+
     this.shadowRoot
       .getElementById("toggle-zones")
       .addEventListener("click", () => {

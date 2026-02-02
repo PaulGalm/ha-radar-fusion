@@ -13,6 +13,7 @@ class RadarFusionHeatmapCard extends HTMLElement {
     this._animationFrameId = null;
     this._isInitialized = false;
     this._renderInProgress = false;
+    this._expandedView = false; // Track expanded view state
   }
 
   connectedCallback() {
@@ -24,6 +25,10 @@ class RadarFusionHeatmapCard extends HTMLElement {
 
   disconnectedCallback() {
     this.stopPolling();
+    // Clean up event listeners
+    if (this._handleKeyPress) {
+      document.removeEventListener("keydown", this._handleKeyPress);
+    }
   }
 
   startPolling() {
@@ -210,11 +215,75 @@ class RadarFusionHeatmapCard extends HTMLElement {
         .canvas-container { border: 1px solid var(--divider-color); border-radius: 4px; overflow: hidden; background: #1a1a1a; position: relative; width: 100%; aspect-ratio: ${canvasWidth} / ${canvasHeight}; }
         canvas { display: block; width: 100% !important; height: 100% !important; }
         .stats { margin-top: 12px; font-size: 12px; color: var(--secondary-text-color); }
+        :host(.expanded) {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 999;
+          padding: 0;
+        }
+        :host(.expanded) .card-container {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+        }
+        :host(.expanded) .expanded-header {
+          background: var(--primary-color);
+          color: var(--text-primary-color);
+          padding: 16px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 18px;
+          font-weight: 500;
+        }
+        :host(.expanded) .expanded-close-btn {
+          background: none;
+          border: none;
+          color: var(--text-primary-color);
+          font-size: 28px;
+          cursor: pointer;
+          padding: 0;
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: opacity 0.2s;
+        }
+        :host(.expanded) .expanded-close-btn:hover {
+          opacity: 0.7;
+        }
+        :host(.expanded) .canvas-container {
+          flex: 1;
+          overflow: auto;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          aspect-ratio: unset;
+        }
+        :host(.expanded) canvas {
+          max-width: 100%;
+          max-height: 100%;
+          width: auto;
+          height: auto;
+          object-fit: contain;
+        }
       </style>
     `;
     const html = `
       ${style}
-      ${this._config.show_header ? `
+      <div class="card-container">
+        ${this._expandedView ? `
+        <div class="expanded-header">
+          <span>${this._config.title} - Expanded View</span>
+          <button class="expanded-close-btn" id="close-expanded">✕</button>
+        </div>
+        ` : ''}
+        ${this._config.show_header && !this._expandedView ? `
       <div class="card-header">
         <div class="card-title">${this._config.title}</div>
         <div class="controls">
@@ -224,6 +293,7 @@ class RadarFusionHeatmapCard extends HTMLElement {
             <option value="all_time">Heatmap: all-time</option>
           </select>
           <button class="toggle-btn" id="reset-heatmap">Reset heatmap</button>
+          <button class="toggle-btn" id="expand-btn" title="Expand view">⛶</button>
         </div>
       </div>
       ` : ''}
@@ -233,25 +303,50 @@ class RadarFusionHeatmapCard extends HTMLElement {
       ${this._config.show_legend ? `
       <div class="stats" id="stats"></div>
       ` : ''}
+      </div>
     `;
     this.shadowRoot.innerHTML = html;
 
     // Use event delegation on controls container
     const controls = this.shadowRoot.querySelector(".controls");
-    controls.addEventListener("change", (ev) => {
-      if (ev.target.id === "heatmap-scale") {
-        this._heatmapScale = ev.target.value;
-        this._lastHeatmapHash = null; // Reset hash to force redraw
-        this.drawHeatmap(); // Only redraw canvas, not full render
+    if (controls) {
+      controls.addEventListener("change", (ev) => {
+        if (ev.target.id === "heatmap-scale") {
+          this._heatmapScale = ev.target.value;
+          this._lastHeatmapHash = null;
+          this.drawHeatmap();
+        }
+      });
+      controls.addEventListener("click", async (ev) => {
+        if (ev.target.id === "reset-heatmap") {
+          await this.resetHeatmap();
+          this._lastHeatmapHash = null;
+          this.drawHeatmap();
+        } else if (ev.target.id === "expand-btn") {
+          this.toggleExpandedView(true);
+        }
+      });
+    }
+
+    const closeExpandedBtn = this.shadowRoot.getElementById("close-expanded");
+    if (closeExpandedBtn) {
+      closeExpandedBtn.addEventListener("click", () => this.toggleExpandedView(false));
+    }
+
+    // Click on canvas to open expanded view
+    const canvasEl = this.shadowRoot.getElementById("heatmapCanvas");
+    if (canvasEl && !this._expandedView) {
+      canvasEl.style.cursor = "pointer";
+      canvasEl.addEventListener("click", () => this.toggleExpandedView(true));
+    }
+
+    // Escape key to close expanded view
+    this._handleKeyPress = (e) => {
+      if (e.key === "Escape" && this._expandedView) {
+        this.toggleExpandedView(false);
       }
-    });
-    controls.addEventListener("click", async (ev) => {
-      if (ev.target.id === "reset-heatmap") {
-        await this.resetHeatmap();
-        this._lastHeatmapHash = null; // Reset hash to force redraw
-        this.drawHeatmap(); // Only redraw canvas, not full render
-      }
-    });
+    };
+    document.addEventListener("keydown", this._handleKeyPress);
 
     // Responsive canvas: set up ResizeObserver
     if (this._resizeObserver) {
@@ -405,6 +500,18 @@ class RadarFusionHeatmapCard extends HTMLElement {
     if (statsEl) {
       statsEl.textContent = `Heatmap bins: ${entries.length}`;
     }
+  }
+
+  toggleExpandedView(expanded) {
+    this._expandedView = expanded;
+    if (expanded) {
+      this.classList.add("expanded");
+      document.body.style.overflow = "hidden";
+    } else {
+      this.classList.remove("expanded");
+      document.body.style.overflow = "";
+    }
+    this.render();
   }
 
   disconnectedCallback() {

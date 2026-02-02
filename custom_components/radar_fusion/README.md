@@ -169,24 +169,86 @@ Useful for:
 
 ### Radar Fusion Card
 
-Display sensor data, zones, and targets:
+Real-time visualization of sensor data, zones, block zones, and detected targets.
 
+**Configuration Options:**
+- `config_entry_id` (required): Config entry ID from Settings → Devices & Services
+- `title` (optional): Display title (default: "Radar Fusion")
+- `floor_id` (optional): Filter to specific floor
+- `floorplan_url` (optional): Background floorplan image URL
+- `floorplan_width_mm` (optional): Physical width of floorplan in millimeters
+- `floorplan_height_mm` (optional): Physical height of floorplan in millimeters
+- `offset_x` (optional): X offset to align radar with floorplan (mm)
+- `offset_y` (optional): Y offset to align radar with floorplan (mm)
+- `width` (optional): Card width in pixels (default: 800)
+- `height` (optional): Card height in pixels (default: 600)
+- `grid_size` (optional): Grid cell size in mm (default: 5000)
+- `show_grid` (optional): Display grid overlay (default: false)
+- `show_header` (optional): Show title and control buttons (default: true)
+- `show_legend` (optional): Show statistics legend (default: true)
+- `zone_opacity` (optional): Zone transparency 0.0-1.0 (default: 0.5)
+- `detection_opacity` (optional): Detection cone transparency 0.0-1.0 (default: 0.3)
+
+**Example:**
 ```yaml
 type: custom:radar-fusion-card
-entity: binary_sensor.radar_fusion_presence
+config_entry_id: "a1b2c3d4e5f6"
 floor_id: living_room
+floorplan_url: /local/floorplan.png
+floorplan_width_mm: 10000
+zone_opacity: 0.6
+detection_opacity: 0.2
+show_header: true
+show_legend: true
 ```
+
+**Interactive Controls:**
+- **Zones button**: Toggle zone visibility
+- **Sensors button**: Toggle sensor positions and targets
+- **Detection Zones button**: Toggle detection cone visualization
 
 ### Radar Fusion Heatmap Card
 
-Visualize detection density as a heatmap:
+Heatmap visualization showing detection density with time-based analysis.
 
+**Configuration Options:**
+- `config_entry_id` (required): Config entry ID from Settings → Devices & Services
+- `title` (optional): Display title (default: "Radar Heatmap")
+- `floor_id` (optional): Filter to specific floor
+- `floorplan_url` (optional): Background floorplan image URL
+- `floorplan_width_mm` (optional): Physical width of floorplan in millimeters
+- `floorplan_height_mm` (optional): Physical height of floorplan in millimeters
+- `offset_x` (optional): X offset to align heatmap with floorplan (mm)
+- `offset_y` (optional): Y offset to align heatmap with floorplan (mm)
+- `width` (optional): Card width in pixels (default: 800)
+- `height` (optional): Card height in pixels (default: 600)
+- `grid_size` (optional): Grid cell size in mm (default: 5000)
+- `opacity` (optional): Heatmap overlay transparency 0-100% (default: 50)
+- `show_header` (optional): Show title and scale controls (default: true)
+- `show_legend` (optional): Show statistics (default: true)
+- `show_grid` (optional): Display grid overlay (default: false)
+
+**Example:**
 ```yaml
 type: custom:radar-fusion-heatmap-card
-entity: binary_sensor.radar_fusion_presence
+config_entry_id: "a1b2c3d4e5f6"
 floor_id: living_room
-heatmap_type: hourly
+floorplan_url: /local/floorplan.png
+floorplan_width_mm: 10000
+opacity: 75
+show_header: true
+show_legend: true
 ```
+
+**Heatmap Scales:**
+- **Hourly**: Last 3600 seconds of detection data
+- **24h**: Last 86400 seconds of detection data
+- **All-time**: Persistent heatmap data across restarts
+
+**Color Gradient:**
+- Green: Low detection density (cold areas)
+- Yellow/Orange: Medium detection density
+- Red: High detection density (hot areas)
 
 ## Coordinate System
 
